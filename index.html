@@ -92,7 +92,6 @@
                     <select id="modelSelector" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition">
                         <option value="latent_diffusion" selected>Confidence Guided Latent Diffusion Model</option>
                         <option value="brownian_bridge">Conditional Brownian Bridge Diffusion Model</option>
-                        <option value="cut">Contrastive Unpaired Translation (CUT)</option>
                     </select>
                 </div>
 
@@ -404,14 +403,6 @@
                 resilience: "Excellent (Direct Bridge)",
                 image: "architectures/brownian_bridge.png",
                 imageAlt: "Conditional Brownian Bridge Diffusion architecture diagram"
-            },
-            cut: {
-                title: "Contrastive Unpaired Translation (CUT)",
-                desc: "An adversarial translation architecture that employs multi-layer patch-wise contrastive learning (PatchNCE) to preserve exact spatial configuration between unpaired datasets, enforcing precise structural correspondences.",
-                inference: "Single-Step Generator Feed",
-                resilience: "Moderate (PatchNCE Enforced)",
-                image: "architectures/cut.png",
-                imageAlt: "CUT architecture diagram"
             }
         };
 
@@ -621,12 +612,6 @@
                     { t: 25, msg: "Stage 2/4: Mapping probability density bridges over latent scales..." },
                     { t: 55, msg: "Stage 3/4: Restricting variance values to generate sharp edges..." },
                     { t: 80, msg: "Stage 4/4: Completing optical coordinate transfer logic..." }
-                ],
-                cut: [
-                    { t: 0, msg: "Stage 1/4: Extracting multi-scale target patch representations..." },
-                    { t: 25, msg: "Stage 2/4: Processing PatchNCE adversarial contrast parameters..." },
-                    { t: 55, msg: "Stage 3/4: Enforcing structural alignments across target domains..." },
-                    { t: 80, msg: "Stage 4/4: Feeding translated structures to image generator..." }
                 ]
             };
 
