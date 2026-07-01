@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISRO BAH 2026: Cloud-Free EO Image Generation using SAR-to-EO Translation</title>
+    <!-- Tailwind CSS for clean structural styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom image slider styles */
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ffffff;
+            z-index: 10;
+        }
+        .comparison-slider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased">
+
+    <!-- Hackathon Header Banner -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Academic & Scientific Seal Representing ISRO Hackathon Entry -->
+                <div class="h-12 w-12 rounded-full border border-orange-200 bg-orange-50 flex items-center justify-center p-1 shadow-inner shrink-0">
+                    <svg class="h-8 w-8 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-bold tracking-widest bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-0.5 rounded-full uppercase">ISRO BAH 2026 Entry</span>
+                        <span class="text-[10px] font-mono text-slate-400">Problem Statement ID: Cloud Removal</span>
+                    </div>
+                    <h1 class="text-xl font-bold text-slate-800">Radar-to-Optical Translation: Cloud-Free Earth Observation via SAR</h1>
+                    <p class="text-xs text-slate-500 font-medium">ISRO Bharatiya Antariksh Hackathon 2026 • AI-powered cloud penetration & high-fidelity optical reconstruction</p>
+                </div>
+            </div>
+            
+            <div class="text-right flex flex-col items-center md:items-end gap-1">
+                <span class="text-xs font-mono bg-slate-100 border border-slate-200 text-slate-600 px-2.5 py-1 rounded">Hackathon Submission Portal</span>
+                <span class="text-[10px] text-slate-400 font-medium font-mono">TRACK: ADVANCED REMOTE SENSING</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Interactive Playground Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Side: Interactive Configuration Dashboard (lg:col-span-4) -->
+        <section class="lg:col-span-4 space-y-6">
+            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-5">
+                <div class="border-b border-slate-100 pb-3">
+                    <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
+                        <svg class="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        Algorithm Configuration
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Select and evaluate different translation model backbones optimized for cloud-piercing reconstruction.</p>
+                </div>
+
+                <!-- 1. Select Model Type -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Reconstruction Model</label>
+                    <select id="modelSelector" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition">
+                        <option value="latent_diffusion" selected>Confidence Guided Latent Diffusion Model</option>
+                        <option value="brownian_bridge">Conditional Brownian Bridge Diffusion Model</option>
+                        <option value="cut">Contrastive Unpaired Translation (CUT)</option>
+                    </select>
+                </div>
+
+                <!-- 2. Evaluation Dataset -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Evaluation Set</label>
+                    <select id="datasetSelector" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition">
+                        <option value="spacenet6" selected>SpaceNet-6 Dataset (Urban / Port Infrastructures)</option>
+                        <option value="sen12ms">SEN12MS-CR Dataset (Agricultural / Mixed Forests)</option>
+                    </select>
+                </div>
+
+                <!-- 3. Target Slices Selection from Folders -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Select Target Image Name</label>
+                    <div class="flex flex-col gap-2">
+                        <!-- Detected file count dropdown -->
+                        <div class="relative">
+                            <select id="imageSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition">
+                                <option disabled selected>Scanning directory...</option>
+                            </select>
+                            <span id="scanStatus" class="absolute right-8 top-3 text-[10px] text-orange-500 animate-pulse font-mono font-medium hidden">probing...</span>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400">
+                        File Directory Path: <span class="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded" id="pathPreview">[model]/[dataset]/[category]/1.png</span>
+                    </p>
+                </div>
+
+                <!-- Trigger Inference CTA -->
+                <button id="runInferenceBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 px-4 rounded-lg transition text-sm flex items-center justify-center gap-2 shadow-sm border border-slate-950">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Execute Cloud Removal Pipeline</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Side: Real-Time Visualization & Interactive Slider (lg:col-span-8) -->
+        <section class="lg:col-span-8 space-y-6">
+            <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[550px]">
+                
+                <!-- Visualization Header -->
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <svg class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Continuous Image-to-Image Validation Arena
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Simulates real-world conditions by comparing polarized SAR imagery with actual, cloud-covered ground truth observations and the generated outputs.</p>
+                    </div>
+                    
+                    <!-- Status Badge -->
+                    <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full text-xs font-medium self-start sm:self-auto">
+                        <span class="relative flex h-2 w-2">
+                            <span id="pulseIndicator" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span id="solidIndicator" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span id="workspaceStatus" class="text-slate-600 font-mono">Idle</span>
+                    </div>
+                </div>
+
+                <!-- Real-Time Interactive Visual Panel Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 my-6 items-center flex-1">
+                    
+                    <!-- Column 1: SAR Radar Input (md:col-span-4) -->
+                    <div class="md:col-span-4 flex flex-col items-center">
+                        <div class="w-full max-w-[240px] flex flex-col">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 text-center">1. Input SAR (Cloud-Piercing)</span>
+                            <div class="relative w-[240px] h-[240px] bg-slate-950 border border-slate-300 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+                                <img id="imgSar" class="w-full h-full object-cover rounded-xl" src="" alt="SAR Input" onerror="handleImageError(this, 'sar')">
+                                <div id="pathTagSar" class="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-xs text-[9px] text-emerald-400 font-mono px-2 py-0.5 rounded border border-emerald-500/30 tracking-wider uppercase">sar path</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Simulated State Pipeline Logger (md:col-span-3) -->
+                    <div class="md:col-span-3 flex flex-col items-center">
+                        <div class="w-full max-w-[160px] flex flex-col">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 text-center">2. Processing State</span>
+                            <div class="w-[160px] h-[240px] bg-slate-50 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-between p-3.5 text-center relative shadow-xs">
+                                <!-- Idle Phase -->
+                                <div id="panelIdle" class="flex flex-col items-center justify-center h-full my-auto space-y-2">
+                                    <svg class="w-8 h-8 text-slate-300 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.656 48.656 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7C4.547 9.547 4.5 10.768 4.5 12s.047 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.092-1.209.138-2.43.138-3.662z" />
+                                    </svg>
+                                    <span class="text-xs text-slate-400 font-medium">Awaiting Pipeline Trigger</span>
+                                </div>
+
+                                <!-- Processing Phase -->
+                                <div id="panelProcessing" class="hidden flex flex-col items-center justify-between h-full w-full py-2">
+                                    <div class="w-8 h-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <div class="w-full space-y-1.5">
+                                        <div id="processingText" class="text-[10px] text-orange-600 font-mono tracking-tight animate-pulse font-medium">Starting...</div>
+                                        <div class="w-full bg-slate-200 rounded-full h-1">
+                                            <div id="processingBar" class="bg-orange-600 h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[9px] text-slate-400 font-mono tracking-wider">Inference Running</span>
+                                </div>
+
+                                <!-- Completed Phase -->
+                                <div id="panelComplete" class="hidden flex flex-col items-center justify-center h-full my-auto space-y-2 text-emerald-600">
+                                    <svg class="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-xs font-semibold">Inference Ready</span>
+                                    <span class="text-[9px] font-mono text-slate-400">Gen Map Unlocked</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Split Slider Workspace (md:col-span-5) -->
+                    <div class="md:col-span-5 flex flex-col items-center">
+                        <div class="w-full max-w-[240px] flex flex-col">
+                            <div class="flex justify-between items-center mb-2 px-1">
+                                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">3. Translation Compare</span>
+                            </div>
+                            <!-- Slidable Comparison Image Viewport wrapper -->
+                            <div id="sliderContainer" class="slider-container w-[240px] h-[240px] bg-slate-100 border border-slate-300 rounded-xl select-none relative shadow-md">
+                                <div id="comparePlaceholder" class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-100 text-center px-4">
+                                    <div class="w-10 h-10 rounded-full border border-dashed border-slate-300 flex items-center justify-center text-slate-400">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 15.75l4.5-4.5 3 3 5.25-5.25 3.75 3.75" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.5 19.5h15" />
+                                        </svg>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Awaiting Generated Output</div>
+                                        <p class="text-[10px] leading-relaxed text-slate-400 font-medium">Run the cloud removal pipeline to unlock the generated-vs-ground-truth comparison view.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-2 left-2 z-20 bg-orange-900/85 text-orange-100 text-[9px] font-semibold px-2 py-1 rounded border border-orange-700 uppercase tracking-[0.18em] pointer-events-none">
+                                    Generated
+                                </div>
+                                <div class="absolute top-2 right-2 z-20 bg-slate-900/85 text-slate-100 text-[9px] font-semibold px-2 py-1 rounded border border-slate-700 uppercase tracking-[0.18em] pointer-events-none">
+                                    Ground Truth
+                                </div>
+                                
+                                <!-- Right-side Background: Ground Truth (GT) -->
+                                <img id="imgGt" class="absolute inset-0 w-full h-full object-cover rounded-xl" src="" alt="GT Image" onerror="handleImageError(this, 'gt')">
+                                <div id="pathTagGt" class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-xs text-[9px] text-slate-300 font-mono px-2 py-0.5 rounded border border-slate-700 select-none pointer-events-none z-20 uppercase tracking-wider">gt path</div>
+
+                                <!-- Left-side Foreground: Generated Output (EO) -->
+                                <div id="generatedWrapper" class="absolute inset-y-0 left-0 right-0 overflow-hidden w-[0%] z-10 transition-all duration-300 filter blur-xs opacity-0">
+                                    <img id="imgGenerated" class="absolute inset-0 w-[240px] h-[240px] max-w-none object-cover rounded-xl" src="" alt="Generated EO" onerror="handleImageError(this, 'gen')">
+                                    <div id="pathTagGen" class="absolute bottom-2 left-2 bg-orange-900/80 backdrop-blur-xs text-[9px] text-orange-100 font-mono px-2 py-0.5 rounded border border-orange-600 select-none pointer-events-none uppercase tracking-wider">gen path</div>
+                                </div>
+
+                                <!-- Interactive Slider Divider - Hidden until randomized timer ends -->
+                                <div id="sliderDivider" class="comparison-slider left-0 hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Full-width Model Architecture Structural Block Card -->
+        <section class="lg:col-span-12">
+            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col gap-1 border-b border-slate-100 pb-3">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Selected Model Backbone</h3>
+                    <p class="text-xs text-slate-400">Architecture notes and the currently selected model diagram live here so the main workspace stays uncluttered.</p>
+                </div>
+                <div id="architectureDetails" class="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
+                    <div class="lg:col-span-7 bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                        <div class="aspect-[16/9] bg-slate-100 flex items-center justify-center">
+                            <img
+                                id="archImage"
+                                class="w-full h-full object-contain"
+                                src="architectures/latent_diffusion.png"
+                                alt="Confidence Guided Latent Diffusion architecture diagram"
+                                onerror="handleArchitectureImageError(this)"
+                            >
+                        </div>
+                        <div id="archImagePath" class="px-3 py-2 border-t border-slate-200 text-[10px] text-slate-500 font-mono bg-white">
+                            architectures/latent_diffusion.png
+                        </div>
+                    </div>
+                    <div class="lg:col-span-5 space-y-3">
+                        <div class="bg-slate-50 rounded-lg p-3.5 border border-slate-100 font-mono text-slate-600 space-y-2">
+                            <div class="text-slate-800 font-bold" id="archTitle">Confidence Guided Latent Diffusion Model</div>
+                            <p class="text-[11px] leading-relaxed text-slate-500" id="archDesc">
+                                Transfers input SAR into a 1/8 downsampled latent vector space via VAE Encoder, conditions the reverse process using cross-attention, and produces sharp EO reconstruction.
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-center text-[11px] font-mono">
+                            <div class="bg-slate-50 border border-slate-100 p-2 rounded-lg">
+                                <span class="block text-slate-400 text-[10px]">SAMPLING ENGINE</span>
+                                <span id="archInference" class="font-semibold text-slate-700">Reverse DDIM</span>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-100 p-2 rounded-lg">
+                                <span class="block text-slate-400 text-[10px]">SPECKLE REJECTION</span>
+                                <span id="archResilience" class="font-semibold text-emerald-600">High (Latent Filter)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Project Footer Info referencing Hackathon details -->
+    <footer class="bg-white border-t border-slate-200 py-6 px-4 text-center text-xs text-slate-500 font-mono mt-auto">
+        <div class="max-w-7xl mx-auto space-y-2">
+            <p>Verification Portal developed for the <span class="text-slate-700 font-semibold">ISRO Bharatiya Antariksh Hackathon (BAH) 2026</span>.</p>
+            <p class="text-[11px] text-slate-400">Optimized neural architectures for deep-learning based satellite image reconstruction and cloud removal mapping tasks.</p>
+        </div>
+    </footer>
+
+    <!-- Execution controller scripts -->
+    <script>
+        // DOM Handles
+        const modelSelector = document.getElementById('modelSelector');
+        const datasetSelector = document.getElementById('datasetSelector');
+        const imageSelect = document.getElementById('imageSelect');
+        const runInferenceBtn = document.getElementById('runInferenceBtn');
+        const pathPreview = document.getElementById('pathPreview');
+        const scanStatus = document.getElementById('scanStatus');
+        
+        const workspaceStatus = document.getElementById('workspaceStatus');
+        const pulseIndicator = document.getElementById('pulseIndicator');
+        const solidIndicator = document.getElementById('solidIndicator');
+
+        const panelIdle = document.getElementById('panelIdle');
+        const panelProcessing = document.getElementById('panelProcessing');
+        const panelComplete = document.getElementById('panelComplete');
+        const processingText = document.getElementById('processingText');
+        const processingBar = document.getElementById('processingBar');
+
+        const archTitle = document.getElementById('archTitle');
+        const archDesc = document.getElementById('archDesc');
+        const archInference = document.getElementById('archInference');
+        const archResilience = document.getElementById('archResilience');
+        const archImage = document.getElementById('archImage');
+        const archImagePath = document.getElementById('archImagePath');
+
+        const generatedWrapper = document.getElementById('generatedWrapper');
+        const sliderDivider = document.getElementById('sliderDivider');
+        const sliderContainer = document.getElementById('sliderContainer');
+        const comparePlaceholder = document.getElementById('comparePlaceholder');
+
+        // Path tags to show in UI
+        const pathTagSar = document.getElementById('pathTagSar');
+        const pathTagGt = document.getElementById('pathTagGt');
+        const pathTagGen = document.getElementById('pathTagGen');
+
+        // Folders Img Handles
+        const imgSar = document.getElementById('imgSar');
+        const imgGt = document.getElementById('imgGt');
+        const imgGenerated = document.getElementById('imgGenerated');
+
+        // Initialize state variables
+        let isProcessing = false;
+        let isGeneratedRevealed = false;
+
+        // Interactive comparison slider code
+        let activeSliding = false;
+
+        function setSliderPosition(x) {
+            if (!isGeneratedRevealed) return;
+            const rect = sliderContainer.getBoundingClientRect();
+            let pos = (x - rect.left) / rect.width;
+            if (pos < 0) pos = 0;
+            if (pos > 1) pos = 1;
+
+            generatedWrapper.style.width = (pos * 100) + "%";
+            sliderDivider.style.left = (pos * 100) + "%";
+        }
+
+        sliderDivider.addEventListener('mousedown', () => { activeSliding = true; });
+        window.addEventListener('mouseup', () => { activeSliding = false; });
+        window.addEventListener('mousemove', (e) => {
+            if (!activeSliding) return;
+            setSliderPosition(e.clientX);
+        });
+
+        // Touch alternatives for mobile viewports
+        sliderDivider.addEventListener('touchstart', () => { activeSliding = true; });
+        window.addEventListener('touchend', () => { activeSliding = false; });
+        window.addEventListener('touchmove', (e) => {
+            if (!activeSliding) return;
+            setSliderPosition(e.touches[0].clientX);
+        });
+
+        // Model specific dynamic descriptors
+        const modelArchitectures = {
+            latent_diffusion: {
+                title: "Confidence Guided Latent Diffusion Model",
+                desc: "Maps speckle-polarized input SAR pixels into a 1/8 downsampled latent representation using an encoder framework, iterates along reverse Brownian diffusion paths guided by cross-attention conditioning, and reconstructs clear optical outputs.",
+                inference: "Denoising DDIM Steps",
+                resilience: "High (VAE Encoder Filter)",
+                image: "architectures/latent_diffusion.png",
+                imageAlt: "Confidence Guided Latent Diffusion architecture diagram"
+            },
+            brownian_bridge: {
+                title: "Conditional Brownian Bridge Diffusion Model",
+                desc: "Constructs direct forward and reverse probability paths between the SAR noise source domains and the optical EO destination domain within the latent space, eliminating noise intermediate states entirely.",
+                inference: "Brownian Integration",
+                resilience: "Excellent (Direct Bridge)",
+                image: "architectures/brownian_bridge.png",
+                imageAlt: "Conditional Brownian Bridge Diffusion architecture diagram"
+            },
+            cut: {
+                title: "Contrastive Unpaired Translation (CUT)",
+                desc: "An adversarial translation architecture that employs multi-layer patch-wise contrastive learning (PatchNCE) to preserve exact spatial configuration between unpaired datasets, enforcing precise structural correspondences.",
+                inference: "Single-Step Generator Feed",
+                resilience: "Moderate (PatchNCE Enforced)",
+                image: "architectures/cut.png",
+                imageAlt: "CUT architecture diagram"
+            }
+        };
+
+        function updateArchitectureCard(modelKey) {
+            const selected = modelArchitectures[modelKey];
+            archTitle.innerText = selected.title;
+            archDesc.innerText = selected.desc;
+            archInference.innerText = selected.inference;
+            archResilience.innerText = selected.resilience;
+            archImage.src = selected.image;
+            archImage.alt = selected.imageAlt;
+            archImagePath.innerText = selected.image;
+        }
+
+        // Resolves which filename to load based on selectors
+        function getActiveFilename() {
+            return imageSelect.value || "1.png";
+        }
+
+        // Generate and update the path string representations in UI
+        function updatePathLabels() {
+            const model = modelSelector.value;
+            const dataset = datasetSelector.value;
+            const filename = getActiveFilename();
+
+            pathPreview.innerText = `${model}/${dataset}/[sar|gt|gen]/${filename}`;
+            pathTagSar.innerText = `${model}/${dataset}/sar/${filename}`;
+            pathTagGt.innerText = `${model}/${dataset}/gt/${filename}`;
+            pathTagGen.innerText = `${model}/${dataset}/gen/${filename}`;
+        }
+
+        // Check if an image exists locally via Promise-wrapped image probing
+        function checkImageExists(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        // Active File Scanner: Checks sequentially up to 50 files
+        async function scanAndPopulateDropdown() {
+            const model = modelSelector.value;
+            const dataset = datasetSelector.value;
+
+            scanStatus.classList.remove('hidden');
+            imageSelect.disabled = true;
+            
+            // Temporary loading indicator in dropdown
+            imageSelect.innerHTML = '<option disabled selected>Probing directory...</option>';
+
+            const detectedList = [];
+            const maxProbeLimit = 50;
+
+            for (let i = 1; i <= maxProbeLimit; i++) {
+                const filename = `${i}.png`;
+                const testUrl = `${model}/${dataset}/sar/${filename}`;
+                const exists = await checkImageExists(testUrl);
+                
+                if (exists) {
+                    detectedList.push(filename);
+                } else {
+                    // Break on first missing sequential file to optimize scanning speed
+                    break;
+                }
+            }
+
+            imageSelect.innerHTML = '';
+            
+            if (detectedList.length > 0) {
+                detectedList.forEach((filename, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = filename;
+                    opt.innerText = filename;
+                    if (idx === 0) opt.selected = true;
+                    imageSelect.appendChild(opt);
+                });
+            } else {
+                // Graceful fallback dropdown if the user has not placed files in local directory yet
+                ['1.png', '2.png', '3.png'].forEach((filename, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = filename;
+                    opt.innerText = filename;
+                    if (idx === 0) opt.selected = true;
+                    imageSelect.appendChild(opt);
+                });
+            }
+
+            imageSelect.disabled = false;
+            scanStatus.classList.add('hidden');
+            
+            resetOutputWorkspace();
+            loadActiveImages();
+        }
+
+        // Fallback error placeholders if paths do not resolve
+        function handleImageError(img, category) {
+            const model = modelSelector.value;
+            const dataset = datasetSelector.value;
+            const filename = getActiveFilename();
+            const expectedPath = `${model}/${dataset}/${category}/${filename}`;
+
+            let bgColor, textColor;
+            if (category === 'sar') {
+                bgColor = '0f172a';
+                textColor = 'f97316'; // High contrast orange
+            } else if (category === 'gt') {
+                bgColor = '1e293b';
+                textColor = 'cbd5e1';
+            } else {
+                bgColor = '1e3a8a';
+                textColor = '93c5fd';
+            }
+
+            img.src = `https://placehold.co/240x240/${bgColor}/${textColor}?text=Missing+${category}%5CnClick+Execute`;
+        }
+
+        function handleArchitectureImageError(img) {
+            const selected = modelArchitectures[modelSelector.value];
+            img.src = "https://placehold.co/960x600/e2e8f0/475569?text=Missing+Architecture+Diagram";
+            archImagePath.innerText = `${selected.image} (missing)`;
+        }
+
+        // Load images with current path scheme
+        function loadActiveImages() {
+            const model = modelSelector.value;
+            const dataset = datasetSelector.value;
+            const filename = getActiveFilename();
+
+            imgSar.src = `${model}/${dataset}/sar/${filename}`;
+            imgGt.src = `${model}/${dataset}/gt/${filename}`;
+            imgGenerated.src = `${model}/${dataset}/gen/${filename}`;
+
+            updatePathLabels();
+        }
+
+        // Trigger scan on configuration parameters adjustment
+        modelSelector.addEventListener('change', () => {
+            updateArchitectureCard(modelSelector.value);
+            scanAndPopulateDropdown();
+        });
+
+        datasetSelector.addEventListener('change', scanAndPopulateDropdown);
+
+        imageSelect.addEventListener('change', () => {
+            resetOutputWorkspace();
+            loadActiveImages();
+        });
+
+        function resetOutputWorkspace() {
+            isProcessing = false;
+            isGeneratedRevealed = false;
+            workspaceStatus.innerText = "Idle";
+            pulseIndicator.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+            solidIndicator.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500";
+
+            panelIdle.classList.remove('hidden');
+            panelProcessing.classList.add('hidden');
+            panelComplete.classList.add('hidden');
+
+            // Hide Comparison slider & Reset foreground generated width to 0%
+            generatedWrapper.classList.add('blur-xs', 'opacity-0');
+            generatedWrapper.classList.remove('opacity-100');
+            generatedWrapper.style.width = "0%";
+            comparePlaceholder.classList.remove('hidden');
+            
+            sliderDivider.style.left = "0%";
+            sliderDivider.classList.add('hidden');
+            
+            runInferenceBtn.disabled = false;
+        }
+
+        // Process button interaction (Randomised 7-12s backend delay)
+        runInferenceBtn.addEventListener('click', () => {
+            if (isProcessing) return;
+            isProcessing = true;
+            runInferenceBtn.disabled = true;
+
+            // Change workspace statuses to "Processing"
+            workspaceStatus.innerText = "Computing";
+            pulseIndicator.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75";
+            solidIndicator.className = "relative inline-flex rounded-full h-2 w-2 bg-orange-500";
+
+            panelIdle.classList.add('hidden');
+            panelProcessing.classList.remove('hidden');
+            panelComplete.classList.add('hidden');
+
+            // Randomise delay cleanly between 7 and 12 seconds
+            const totalDuration = (Math.random() * (12 - 7) + 7) * 1000;
+            const pollRate = 100; // update progress smoothly every 100ms
+            const totalTicks = totalDuration / pollRate;
+            let currentTick = 0;
+
+            const modelVal = modelSelector.value;
+
+            // Log prompts updated at specific milestones
+            const logsMap = {
+                latent_diffusion: [
+                    { t: 0, msg: "Stage 1/4: Projecting active SAR returns into downsampled latent space..." },
+                    { t: 25, msg: "Stage 2/4: Generating reverse sampling vectors along DDIM paths..." },
+                    { t: 55, msg: "Stage 3/4: Minimizing spatial noise patterns via cross-attention..." },
+                    { t: 80, msg: "Stage 4/4: Decoding processed representation into cloud-free EO map..." }
+                ],
+                brownian_bridge: [
+                    { t: 0, msg: "Stage 1/4: Formatting continuous boundary parameters..." },
+                    { t: 25, msg: "Stage 2/4: Mapping probability density bridges over latent scales..." },
+                    { t: 55, msg: "Stage 3/4: Restricting variance values to generate sharp edges..." },
+                    { t: 80, msg: "Stage 4/4: Completing optical coordinate transfer logic..." }
+                ],
+                cut: [
+                    { t: 0, msg: "Stage 1/4: Extracting multi-scale target patch representations..." },
+                    { t: 25, msg: "Stage 2/4: Processing PatchNCE adversarial contrast parameters..." },
+                    { t: 55, msg: "Stage 3/4: Enforcing structural alignments across target domains..." },
+                    { t: 80, msg: "Stage 4/4: Feeding translated structures to image generator..." }
+                ]
+            };
+
+            const currentLogs = logsMap[modelVal];
+
+            const interval = setInterval(() => {
+                currentTick++;
+                const progressPct = (currentTick / totalTicks) * 100;
+                processingBar.style.width = `${progressPct}%`;
+
+                // Update text based on current phase
+                const currentPhase = currentLogs.find((phase, idx) => {
+                    const nextPhase = currentLogs[idx + 1];
+                    const activeMin = phase.t;
+                    const activeMax = nextPhase ? nextPhase.t : 100;
+                    const curPct = (currentTick / totalTicks) * 100;
+                    return curPct >= activeMin && curPct < activeMax;
+                });
+
+                const elapsedSeconds = (currentTick * pollRate) / 1000;
+                const totalSeconds = totalDuration / 1000;
+
+                if (currentPhase) {
+                    processingText.innerText = `${currentPhase.msg} (${elapsedSeconds.toFixed(1)}s / ${totalSeconds.toFixed(1)}s)`;
+                }
+
+                if (currentTick >= totalTicks) {
+                    clearInterval(interval);
+                    completePipelineSampling();
+                }
+            }, pollRate);
+        });
+
+        function completePipelineSampling() {
+            isProcessing = false;
+            isGeneratedRevealed = true;
+
+            // Change status indicators to "Success"
+            workspaceStatus.innerText = "Optimized";
+            pulseIndicator.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+            solidIndicator.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500";
+
+            panelProcessing.classList.add('hidden');
+            panelComplete.classList.remove('hidden');
+
+            // Unhide gen visual element
+            comparePlaceholder.classList.add('hidden');
+            generatedWrapper.classList.remove('blur-xs', 'opacity-0');
+            generatedWrapper.classList.add('opacity-100');
+            generatedWrapper.style.width = "50%"; // Reset to half split
+            
+            // Unhide comparison slider divider
+            sliderDivider.classList.remove('hidden');
+            sliderDivider.style.left = "50%";
+
+            runInferenceBtn.disabled = false;
+        }
+
+        // Initial setup and trigger image scanner probe on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateArchitectureCard(modelSelector.value);
+            scanAndPopulateDropdown();
+        });
+    </script>
+</body>
+</html>
